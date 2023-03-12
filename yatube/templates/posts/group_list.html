@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<ul><ul><ul><ul><ul><ul>
+  {% block title %}Записи группы: {{ group.title }}{% endblock %}
+  </ul></ul></ul></ul></ul></ul>
+<ul><ul><ul><ul><ul><ul>
+<h1>{{ group.title }}</h1>
+</ul></ul></ul></ul></ul></ul>
+<ul><ul><ul><ul><ul><ul>
+<p>
+  {{ group.description }}
+</p>
+</ul></ul></ul></ul></ul></ul>
+<div class="container py-5"> 
+  {% for post in page_obj %}
+  <ul>
+    <li>
+      Автор: {{ post.author}} 
+    </li>
+    <li>
+      Дата публикации: {{ post.pub_date|date:"d E Y" }}
+    </li>
+    <li>
+    <a href="{% url 'posts:post_detail' post.pk %}">подробная информация</a>
+    </li>
+    <li>
+    <a href="{% url 'posts:profile' post.author %}">все посты пользователя</a>
+    </li>
+  </ul>
+  <a>
+  <p>{{ post.text }}</p>
+  <a/>
+    {% include 'posts/includes/img_for_all.html' %}
+    {% if not forloop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% include 'posts/includes/paginator.html' %}
+</div>
+{% endblock %}
