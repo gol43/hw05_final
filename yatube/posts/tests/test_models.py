@@ -39,8 +39,8 @@ class FollowModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='user')
-        cls.author_for_check = User.objects.create_user(username='auth')
+        cls.user = User.objects.create_user(username='gol43')
+        cls.author_for_check = User.objects.create_user(username='fol43')
         cls.follow = Follow.objects.create(
             user=cls.user,
             author=cls.author_for_check,)
