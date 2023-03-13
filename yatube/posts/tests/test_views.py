@@ -7,6 +7,7 @@ from django import forms
 from django.conf import settings
 import shutil
 import tempfile
+from django.core.cache import cache
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
@@ -34,6 +35,7 @@ class TestView(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     def test_pages_uses_correct_template(self):
         """проверка шаблона"""

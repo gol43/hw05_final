@@ -6,7 +6,8 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ('text', 'group', 'image')
-        labels = {'text': 'Write text', 'group': 'Choose group'}
+        labels = {'text': 'Write text', 'group': 'Choose group',
+                  'image': 'Choose image'}
 
 
 class CommentForm(forms.ModelForm):

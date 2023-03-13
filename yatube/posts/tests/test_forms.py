@@ -6,6 +6,8 @@ from http import HTTPStatus
 import shutil
 import tempfile
 from django.conf import settings
+from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
@@ -27,6 +29,24 @@ class PostFormTests(TestCase):
             title='Тестовый заголовок для проверки',
             slug='Test-dlya-slug-for-proverki',
             description='Тестовый заголовок для проверки')
+        image = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        cls.load = SimpleUploadedFile(
+            name="gif.gif",
+            content=image,
+            content_type="gif/gif"
+        )
+        cls.load_v2 = SimpleUploadedFile(
+            name="gif_v2.gif",
+            content=image,
+            content_type="gif_v2/gif"
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -37,13 +57,15 @@ class PostFormTests(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     def test_create_post(self):
         """проверка формы для поста"""
         tasks_count = Post.objects.count() + 1
         form_data = {
             'text': 'Тестовый текст',
-            'group': self.group.id, }
+            'group': self.group.id,
+            'image': self.load, }
         response = self.authorized_client.post(
             reverse('posts:post_create'),
             data=form_data,
@@ -53,14 +75,17 @@ class PostFormTests(TestCase):
                               args=[get_object_or_404(User,
                                                       username='gol43')]))
         self.assertEqual(Post.objects.count(), tasks_count)
-        self.assertTrue(Post.objects.filter(group=self.group,
-                                            text='Тестовый текст',).exists())
+        self.assertTrue(
+            Post.objects.filter(group=self.group,
+                                text='Тестовый текст',
+                                image=f'posts/{self.load}').exists())
 
     def test_edit_post(self):
         """проверка редакции"""
         form_data = {
             'text': 'Тестовый текст из формы для проверки',
-            'group': self.group_v2_for_check.id}
+            'group': self.group_v2_for_check.id,
+            'image': self.load_v2, }
         response = self.authorized_client.post(
             reverse('posts:edit_post',
                     kwargs={'post_id': f'{self.post.id}'}),
@@ -70,12 +95,12 @@ class PostFormTests(TestCase):
                                      kwargs={'post_id': f'{self.post.id}'}))
         self.assertTrue(Post.objects.filter(
                         text='Тестовый текст из формы для проверки',
-                        group=self.group_v2_for_check.id
-                        ).exists())
+                        group=self.group_v2_for_check.id,
+                        image=f'posts/{self.load_v2}').exists())
         self.assertFalse(Post.objects.filter(
                          text='Тестовый текст из формы',
-                         group=self.group.id
-                         ).exists())
+                         group=self.group.id,
+                         image=f'posts/{self.load}').exists())
 
     def test_cant_create_existing_slug(self):
         tasks_count = Post.objects.count()
@@ -101,12 +126,14 @@ class PostFormTests(TestCase):
                 response = self.guest_client.post(
                     form_url,
                     data={'text': 'Тестовый текст из формы для проверки',
-                          'group': self.group_v2_for_check.id, })
+                          'group': self.group_v2_for_check.id,
+                          'image': self.load_v2, })
                 self.assertIn('/auth/login/', response.url)
                 self.assertEqual(response.status_code, HTTPStatus.FOUND)
                 self.assertFalse(Post.objects.filter(
                     group=self.group,
-                    text={'Тестовый текст из формы'},).exists())
+                    text={'Тестовый текст из формы'},
+                    image=f'posts/{self.load}').exists())
 
 
 class CommentTest(TestCase):
